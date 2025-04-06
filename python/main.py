@@ -96,8 +96,25 @@ async def get_image(image_name):
 
 class Item(BaseModel):
     name: str
+    category: str
 
-
-def insert_item(item: Item):
+def insert_item(item: Item, category: Item):
     # STEP 4-2: add an implementation to store an item
+    import json
+    import os
+    file_path = 'items.json'
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            json.dump({"items":[]},f, indent=4)
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    new_item  = {
+        "name": item,
+        "category": category
+
+    }
+    data["items"].append(new_item)
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=4)
+
     pass
