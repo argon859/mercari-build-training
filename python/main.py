@@ -58,12 +58,9 @@ class HelloResponse(BaseModel):
 
 @app.get("/", response_model=HelloResponse)
 def hello():
-    return HelloResponse(**{"message": "Hello, world!"})
-
-
+    return HelloResponse(**items.json)
 class AddItemResponse(BaseModel):
     message: str
-
 
 # add_item is a handler to add a new item for POST /items .
 @app.post("/items", response_model=AddItemResponse)
@@ -74,7 +71,7 @@ def add_item(
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    insert_item(Item(name=name))
+    insert_item(Item(name=name,category=category))
     return AddItemResponse(**{"message": f"item received: {name}"})
 
 
