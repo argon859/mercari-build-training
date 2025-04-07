@@ -58,12 +58,9 @@ class HelloResponse(BaseModel):
 
 @app.get("/", response_model=HelloResponse)
 def hello():
-    return HelloResponse(**{"message": "Hello, world!"})
-
-
+    return HelloResponse(**items.json)
 class AddItemResponse(BaseModel):
     message: str
-
 
 # add_item is a handler to add a new item for POST /items .
 @app.post("/items", response_model=AddItemResponse)
@@ -74,7 +71,7 @@ def add_item(
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    insert_item(Item(name=name))
+    insert_item(Item(name=name,category=category))
     return AddItemResponse(**{"message": f"item received: {name}"})
 
 
@@ -96,8 +93,25 @@ async def get_image(image_name):
 
 class Item(BaseModel):
     name: str
+    category: str
 
-
-def insert_item(item: Item):
+def insert_item(item: Item, category: Item):
     # STEP 4-2: add an implementation to store an item
+    import json
+    import os
+    file_path = 'items.json'
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            json.dump({"items":[]},f, indent=4)
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    new_item  = {
+        "name": item,
+        "category": category
+
+    }
+    data["items"].append(new_item)
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=4)
+
     pass
