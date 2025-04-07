@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import pathlib
 from fastapi import FastAPI, Form, HTTPException, Depends
@@ -7,12 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
+from typing import List
+import hashlib
+
 
 
 # Define the path to the images & sqlite3 database
 images = pathlib.Path(__file__).parent.resolve() / "images"
 db = pathlib.Path(__file__).parent.resolve() / "db" / "mercari.sqlite3"
 
+class Item(BaseModel):
+    name: str
+    category: str
 
 def get_db():
     if not db.exists():
@@ -53,12 +60,16 @@ app.add_middleware(
 
 
 class HelloResponse(BaseModel):
-    message: str
+    items: List[Item]
 
 
-@app.get("/", response_model=HelloResponse)
+@app.get("/items", response_model=HelloResponse)
 def hello():
-    return HelloResponse(**items.json)
+    with open("items.json", "r") as f:
+        data = json.load(f)
+
+    return HelloResponse(**data)
+
 class AddItemResponse(BaseModel):
     message: str
 
@@ -66,12 +77,13 @@ class AddItemResponse(BaseModel):
 @app.post("/items", response_model=AddItemResponse)
 def add_item(
     name: str = Form(...),
+    category: str = Form(...),
     db: sqlite3.Connection = Depends(get_db),
 ):
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    insert_item(Item(name=name,category=category))
+    insert_item(Item(name=name, category=category))
     return AddItemResponse(**{"message": f"item received: {name}"})
 
 
@@ -91,14 +103,9 @@ async def get_image(image_name):
     return FileResponse(image)
 
 
-class Item(BaseModel):
-    name: str
-    category: str
-
-def insert_item(item: Item, category: Item):
+def insert_item(item: Item):
     # STEP 4-2: add an implementation to store an item
-    import json
-    import os
+
     file_path = 'items.json'
     if not os.path.exists(file_path):
         with open(file_path, 'w') as f:
@@ -106,12 +113,12 @@ def insert_item(item: Item, category: Item):
     with open(file_path, 'r') as f:
         data = json.load(f)
     new_item  = {
-        "name": item,
-        "category": category
+        "name": item.name,
+        "category": item.category
 
     }
     data["items"].append(new_item)
-    with open(filepath, "w") as f:
+    with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
 
     pass
