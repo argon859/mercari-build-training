@@ -2,11 +2,9 @@
     "items": [
         {
             "name": "jacket",
-            "category": "fashion"
-        },
-        {
-            "name": "jacket",
-            "category": "fashion"
+
+            "category": "fashion",
+            "image_name": "841aec4373ba9221ac3d71c6de81c334d568bf27b602b6cbb7776992a696658b.jpg"
         }
     ]
 }
