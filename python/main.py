@@ -62,7 +62,7 @@ app.add_middleware(
 class HelloResponse(BaseModel):
     items: list
 
-
+#jsonでかえってくる。正規化してない
 @app.get("/", response_model=HelloResponse)
 def hello():
     with open('items.json', 'r') as f:
@@ -73,6 +73,7 @@ class AddItemResponse(BaseModel):
     items: list
 
 # add_item is a handler to add a new item for POST /items .
+#正規化済
 @app.post("/items", response_model=AddItemResponse)
 def add_item(
     name: str = Form(...),
@@ -89,7 +90,7 @@ def add_item(
     #items = insert_item(Item(name=name,category=category,image_name=image_name))
     cur = db.cursor()
 
-    # カテゴリ名からカテゴリIDを取得（なければ追加）
+
     cur.execute("SELECT id FROM categories WHERE name = ?", (category,))
     category_row = cur.fetchone()
 
@@ -119,6 +120,7 @@ def add_item(
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
+#jsonでかえってくる。正規化してない
 @app.get("/items/{item_id}", response_model=HelloResponse)
 def new_get(item_id:int):
     with open('items.json', 'r') as f:
@@ -130,10 +132,10 @@ def new_get(item_id:int):
     except IndexError:
         return HelloResponse(items=[])
     #with open('items.json', 'r') as f:
-
     #return HelloResponse(message=data.get("items", [item_id]))
 
 
+#何も触ってない
 @app.get("/images/{image_name}")
 async def get_image(image_name):
     # Create image pat
@@ -147,7 +149,7 @@ async def get_image(image_name):
 
     return FileResponse(image)
 
-
+#正規化済
 @app.get("/items", response_model=AddItemResponse)
 def get_items(db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
@@ -161,6 +163,7 @@ def get_items(db: sqlite3.Connection = Depends(get_db)):
 
     items = [dict(row) for row in rows]  # Row を dict に変換
     return AddItemResponse(items=items)
+#正規化済
 @app.get("/search", response_model=AddItemResponse)
 def get_items(
     db: sqlite3.Connection = Depends(get_db),
