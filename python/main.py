@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 import json
 from fastapi import File, UploadFile
 import hashlib
+from fastapi import Query
 
 
 
@@ -24,6 +25,8 @@ def get_db():
 
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row  # Return rows as dictionaries
+
+
     try:
         yield conn
     finally:
@@ -77,12 +80,26 @@ def add_item(
     image: UploadFile = File(...),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
     hashed_value = hashlib.sha256(image.filename.encode()).hexdigest()
     image_name = hashed_value + ".jpg"
 
-    items = insert_item(Item(name=name,category=category,image_name=image_name))
+    #items = insert_item(Item(name=name,category=category,image_name=image_name))
+    cur = db.cursor()
+    cur.execute('INSERT INTO items (name,category,image_name) VALUES (?,?,?)',(name,category,image_name))
+
+    db.commit()
+
+    item_id = cur.lastrowid
+    items = [{
+        "id": item_id,
+        "name": name,
+        "category": category,
+        "image_name": image_name
+    }]
+
     return AddItemResponse(items=items)
 
 
@@ -101,6 +118,7 @@ def new_get(item_id:int):
 
     #return HelloResponse(message=data.get("items", [item_id]))
 
+
 @app.get("/images/{image_name}")
 async def get_image(image_name):
     # Create image pat
@@ -114,6 +132,57 @@ async def get_image(image_name):
 
     return FileResponse(image)
 
+
+@app.get("/items", response_model=AddItemResponse)
+def get_items(db: sqlite3.Connection = Depends(get_db)):
+    cur = db.cursor()
+    query = """
+        SELECT items.id, items.name, categories.name AS category, items.image_name
+        FROM items
+        JOIN categories ON items.category_id = categories.id
+        """
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    items = [dict(row) for row in rows]  # Row を dict に変換
+    return AddItemResponse(items=items)
+@app.get("/search", response_model=AddItemResponse)
+def get_items(
+    db: sqlite3.Connection = Depends(get_db),
+    id: int = Query(None),
+    name: str = Query(None),
+    category: str = Query(None),
+
+              ):
+    cur = db.cursor()
+
+    query ="""
+    SELECT items.id, items.name, categories.name AS category, items.image_name
+    FROM items
+    JOIN categories ON items.category_id = categories.id
+    """
+    conditions = []
+    params = []
+
+    if id is not None:
+        conditions.append("id = ?")
+        params.append(id)
+
+    if name:
+        conditions.append("name LIKE ?")
+        params.append(f"%{name}%")
+
+    if category:
+        conditions.append("category LIKE ?")
+        params.append(f"%{category}%")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    cur.execute(query, params)
+    rows = cur.fetchall()
+
+    items = [dict(row) for row in rows]
+    return AddItemResponse(items=items)
 
 class Item(BaseModel):
     name: str
