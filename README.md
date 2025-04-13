@@ -1,5 +1,5 @@
 # Build@Mercari Training Program 
-
+workflow has activated
 This is argon859's build training repository.
 
 Build trainingの前半では個人で課題に取り組んでもらい、Web開発の基礎知識をつけていただきます。
