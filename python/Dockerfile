@@ -1,4 +1,4 @@
-FROM python:3.10  # これだけでOK！
+FROM python:3.10  
 
 RUN addgroup --system mercari && adduser --system trainee --ingroup mercari
 
