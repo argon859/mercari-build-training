@@ -1,9 +1,11 @@
-FROM python:3.10
-FROM alpine
+FROM python:3.10  # これだけでOK！
 
-RUN addgroup -S mercari && adduser -S trainee -G mercari
-# RUN chown -R trainee:mercari /path/to/db
+RUN addgroup --system mercari && adduser --system trainee --ingroup mercari
 
 USER trainee
 
-CMD ["python", "-V"]
+WORKDIR /app
+
+COPY . .
+
+CMD ["python", "--version"]
