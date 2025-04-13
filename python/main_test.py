@@ -41,13 +41,17 @@ import pathlib
 #         test_db.unlink() # Remove the file
 
 from main import app
+client = TestClient(app)
+
 @pytest.mark.parametrize(
     "want_status_code, want_body",
     [
         (200, {"message": "Hello, world!"}),
     ],
 )
+
 def test_hello(want_status_code, want_body):
+
     response_body = client.get("/")
 
     # STEP 6-2: confirm the status code
