@@ -117,7 +117,7 @@ def add_item(
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
-#正規化中
+#正規化済
 @app.get("/items/{item_id}", response_model=AddItemResponse)
 def new_get(
         item_id: int,
