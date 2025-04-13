@@ -60,14 +60,11 @@ app.add_middleware(
 
 
 class HelloResponse(BaseModel):
-    items: list
-
-#jsonでかえってくる。正規化してない
+    message: str
+#起動の確認
 @app.get("/", response_model=HelloResponse)
 def hello():
-    with open('items.json', 'r') as f:
-        data = json.load(f)
-    return HelloResponse(items=data.get("items", []))
+    return HelloResponse(**{"message": "Hello, world!"})
 
 class AddItemResponse(BaseModel):
     items: list
@@ -120,17 +117,34 @@ def add_item(
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
-#jsonでかえってくる。正規化してない
-@app.get("/items/{item_id}", response_model=HelloResponse)
-def new_get(item_id:int):
-    with open('items.json', 'r') as f:
-        data = json.load(f)
-    items=data.get("items", [])
+#正規化中
+@app.get("/items/{item_id}", response_model=AddItemResponse)
+def new_get(
+        item_id: int,
+        db: sqlite3.Connection = Depends(get_db)
+            ):
+    offset = item_id -1
+    cur = db.cursor()
+    query = """
+            SELECT items.id, items.name, categories.name AS category, items.image_name
+            FROM items
+            JOIN categories ON items.category_id = categories.id
+            LIMIT 1 OFFSET ?
+            """
+    cur.execute(query,(offset,))
+    row = cur.fetchone()
 
-    try:
-        return HelloResponse(items=[items[item_id]])
-    except IndexError:
-        return HelloResponse(items=[])
+    column_names = [desc[0] for desc in cur.description]
+    item = dict(zip(column_names, row))
+    return AddItemResponse(items=[item])
+#    with open('items.json', 'r') as f:
+#       data = json.load(f)
+#    items=data.get("items", [])
+
+#    try:
+#        return HelloResponse(items=[items[item_id]])
+#    except IndexError:
+#        return HelloResponse(items=[])
     #with open('items.json', 'r') as f:
     #return HelloResponse(message=data.get("items", [item_id]))
 
@@ -203,6 +217,7 @@ def get_items(
     return AddItemResponse(items=items)
 
 class Item(BaseModel):
+    id: int
     name: str
     category: str
     image_name: str
