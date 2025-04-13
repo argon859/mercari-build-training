@@ -1,3 +1,4 @@
+FROM python:3.10
 FROM alpine
 
 RUN addgroup -S mercari && adduser -S trainee -G mercari
