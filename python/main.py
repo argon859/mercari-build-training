@@ -88,15 +88,30 @@ def add_item(
 
     #items = insert_item(Item(name=name,category=category,image_name=image_name))
     cur = db.cursor()
-    cur.execute('INSERT INTO items (name,category,image_name) VALUES (?,?,?)',(name,category,image_name))
 
+    # カテゴリ名からカテゴリIDを取得（なければ追加）
+    cur.execute("SELECT id FROM categories WHERE name = ?", (category,))
+    category_row = cur.fetchone()
+
+    if category_row:
+        category_id = category_row["id"]
+    else:
+        cur.execute("INSERT INTO categories (name) VALUES (?)", (category,))
+        category_id = cur.lastrowid
+
+    # itemを追加
+    cur.execute(
+        "INSERT INTO items (name, category_id, image_name) VALUES (?, ?, ?)",
+        (name, category_id, image_name)
+    )
+    item_id = cur.lastrowid
     db.commit()
 
-    item_id = cur.lastrowid
+
     items = [{
         "id": item_id,
         "name": name,
-        "category": category,
+        "category_id": category_id,
         "image_name": image_name
     }]
 
